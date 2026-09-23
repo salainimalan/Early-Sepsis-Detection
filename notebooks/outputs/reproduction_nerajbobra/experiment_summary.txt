@@ -1,0 +1,10 @@
+method: Neraj Bobra-style two-branch Bidirectional LSTM
+dataset: PhysioNet/CinC 2019 Training Set A
+window_hours: 10
+prediction_horizon_hours: 1
+sequence_features: HR, MAP, O2Sat, SBP, Resp
+summary_feature_count: 33
+batch_size: 64
+max_epochs: 50
+test_AUROC: 0.7082886123198435
+test_AUPRC: 0.04547983449901544
