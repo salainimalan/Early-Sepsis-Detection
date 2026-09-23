@@ -1,0 +1,1 @@
+"""Future responsibility: calculate configurable distances between symbolic sequences.""

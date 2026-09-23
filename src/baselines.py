@@ -1,0 +1,1 @@
+"""Future responsibility: implement transparent threshold-based clinical baselines.""
