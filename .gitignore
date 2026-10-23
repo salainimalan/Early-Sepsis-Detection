@@ -51,4 +51,5 @@ outputs/**/*
 !outputs/features/
 !outputs/models/
 !outputs/evaluation/
-!outputs/figures/
+!src/
+

@@ -179,7 +179,7 @@ A stacked Bidirectional LSTM learns temporal dependencies, combines the learned 
 | **AUROC** | **0.79196** |
 | **AUPRC** | **0.07650** |
 | **Accuracy** | **0.84982** |
-| **Precision** | **0.07221** |
+| **Precision** | **0.7221** |
 | **Recall** | **0.48745** |
 | **F1-score** | **0.12578** |
 
