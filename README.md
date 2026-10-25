@@ -4,7 +4,7 @@ An end-to-end sequential data mining pipeline for early sepsis detection from ho
 
 ![Python](https://img.shields.io/badge/Python-3.9%2B-3776AB?logo=python&logoColor=white)
 ![Jupyter](https://img.shields.io/badge/Jupyter-Notebook-F37626?logo=jupyter&logoColor=white)
-![PyTorch](https://img.shields.io/badge/PyTorch-Temporal%20Model-EE4C2C?logo=pytorch&logoColor=white)
+![TensorFlow](https://img.shields.io/badge/TensorFlow-Bidirectional%20LSTM-FF6F00?logo=tensorflow&logoColor=white)
 ![scikit-learn](https://img.shields.io/badge/scikit--learn-Evaluation-F7931E?logo=scikit-learn&logoColor=white)
 ![Domain](https://img.shields.io/badge/Domain-Healthcare%20AI-2E8B57)
 ![Task](https://img.shields.io/badge/Task-Sepsis%20Prediction-8A2BE2)
@@ -14,7 +14,7 @@ An end-to-end sequential data mining pipeline for early sepsis detection from ho
 
 ## Overview
 
-This project transforms continuous ICU measurements into symbolic physiological states, discovers recurring patterns in pre-sepsis and non-septic cohorts, filters those patterns into closed and discriminative patterns, converts them into sequence-similarity features, and performs temporal sepsis classification using a Bidirectional LSTM.
+This project develops an upgraded two-branch Bidirectional LSTM for early sepsis prediction from hourly ICU observations. The model combines a 24-hour continuous physiological sequence with window-level summary features, missingness indicators, temporal trends, and imbalance-aware training. Sequential pattern mining remains available as an interpretability and feature-analysis component, but the upgraded LSTM is the central predictive model.
 
 ```text
 Raw ICU Time Series
@@ -158,48 +158,49 @@ Positive ≈ 0.35
 Negative ≈ 0.30
 ```
 
-### 7. Temporal Classification
+### 7. Upgraded Temporal Classification
 
-A 10-hour historical ICU window is used to predict the sepsis state in the following hour.
+A 24-hour historical ICU window is used to predict the sepsis state in the following hour. Windows are split at the patient level so that observations from a patient cannot appear in both training and testing.
 
-The temporal branch preserves the hourly order of:
+The recurrent branch preserves the hourly order of twelve clinical variables, including:
 
 ```text
-HR, MAP, O2Sat, SBP, Resp
+HR, O2Sat, Temp, SBP, MAP, DBP, Resp,
+FiO2, pH, Lactate, WBC, Creatinine
 ```
 
-Additional clinical variables are represented through window-level summaries.
+The model also uses window-level means, standard deviations, latest values, missingness rates, and temporal changes. Missing measurements are represented explicitly rather than treated as ordinary zeros.
 
-A stacked Bidirectional LSTM learns temporal dependencies, combines the learned representation with additional clinical features, and produces the final two-class prediction. Class weighting is used to address the strong class imbalance.
+A stacked Bidirectional LSTM learns temporal dependencies, while a dense branch processes the summary features. The two branches are merged for the final prediction. Weighted binary cross-entropy or focal loss addresses the strong class imbalance, and the decision threshold is selected using validation data.
 
-## Final Validation Results
+## Current LSTM Results
 
-| Metric | Result |
+| Split | AUROC | AUPRC | Accuracy | Precision | Recall | F1-score |
 |---|---:|
-| **AUROC** | **0.79196** |
-| **AUPRC** | **0.07650** |
-| **Accuracy** | **0.84982** |
-| **Precision** | **0.7221** |
-| **Recall** | **0.48745** |
-| **F1-score** | **0.12578** |
+| Split | AUROC | AUPRC | Accuracy | Precision | Recall | F1-score |
+|---|---:|---:|---:|---:|---:|---:|
+| Validation | 0.72003 | 0.06899 | 0.84804 | 0.07704 | 0.35053 | 0.12632 |
+| Test | 0.72676 | 0.08095 | 0.85271 | 0.08148 | 0.35178 | 0.13231 |
 
-Because septic cases are a minority class, accuracy should not be interpreted independently. AUPRC, precision, recall and F1 provide additional information about minority-class detection.
+These are the current results for the upgraded LSTM. Because septic cases are a minority class, accuracy should not be interpreted independently. AUPRC, precision, recall, F1, and the official PhysioNet utility score are the primary comparison metrics.
+
+The project also keeps a benchmark table of published PhysioNet/CinC 2019 results in:
+
+```text
+outputs/evaluation/physionet_2019_participant_benchmarks.csv
+```
+
+The upgraded model writes its own checkpoints, metrics, predictions, and figures only under `output1/`.
 
 ## Evaluation Plots
 
-The final model generates:
+The upgraded model is compared with selected published PhysioNet/CinC 2019
+results using AUROC, AUPRC, and F1-score:
 
-- Validation ROC curve
-- Validation Precision–Recall curve
-- AUROC and AUPRC values
-- Classification metrics
+![Upgraded LSTM competition comparison](output1/figures/lstm_competition_comparison.png)
 
-Recommended figure locations:
-
-```text
-figures/validation_roc.png
-figures/validation_pr.png
-```
+The source script is `src1/plot_comparison.py`, and the generated figure is
+stored at `output1/figures/lstm_competition_comparison.png`.
 
 ## Repository Structure
 
@@ -215,14 +216,14 @@ figures/validation_pr.png
 │   ├── 03_Closed_and_Discriminative_Patterns.ipynb
 │   ├── 04_Sequence_Distance_Features.ipynb
 │   └── 05_Temporal_Classification.ipynb
-├── outputs/
-├── figures/
+├── outputs/                  # Existing analysis and benchmark artifacts
+├── output1/                  # Upgraded LSTM artifacts only
+├── src/                      # Existing analysis modules
+├── src1/                     # Upgraded LSTM implementation only
 ├── requirements.txt
 ├── README.md
 └── LICENSE
 ```
-
-Adjust filenames if the repository uses a different final organization.
 
 ## Installation
 
@@ -235,8 +236,7 @@ Recommended environment:
 - scikit-learn
 - matplotlib
 - seaborn
-- PyTorch
-- TensorFlow/Keras where required by the final model
+- TensorFlow/Keras
 - PrefixSpan-compatible implementation
 
 Install dependencies with:
@@ -257,7 +257,15 @@ The raw dataset should not be committed to the repository because of its size an
 
 ## Running the Project
 
-Run the notebooks in order:
+The upgraded LSTM can be run directly with:
+
+```bash
+python src1/lstm_pipeline.py
+```
+
+Its outputs are written to `output1/`. The exploratory and pattern-mining notebooks remain available for analysis, but the new LSTM pipeline is the primary modeling workflow.
+
+The analysis notebooks can still be run in order:
 
 ```text
 00_EDA
@@ -278,16 +286,17 @@ The project combines three complementary components:
 
 **Pattern-based similarity** measures how closely a patient's recent physiological states resemble the discovered patterns.
 
-**Temporal deep learning** learns dependencies across ordered ICU observations and performs the final prediction.
+**The upgraded two-branch Bidirectional LSTM** learns dependencies across ordered ICU observations while combining continuous measurements, missingness, trends, and summary features for the final prediction.
 
 This produces a pipeline that combines interpretable physiological pattern discovery with temporal predictive modeling.
 
 ## Limitations
 
-- Only Training Set A is used because of computational constraints.
+- The primary experiment uses Training Set A; Training Set B is available for later external validation.
 - The dataset has substantial class imbalance.
-- Symbolic discretization reduces continuous numerical information.
+- Missing clinical measurements are common and handled explicitly.
 - Pattern discovery depends on support and discriminative thresholds.
+- The official Challenge utility score requires hourly predictions rather than only fixed patient windows.
 - Negative-window sampling may not represent every challenging non-septic case.
 - The system is an academic research prototype and is not intended for clinical deployment.
 
@@ -313,9 +322,9 @@ This produces a pipeline that combines interpretable physiological pattern disco
 
 ![Pattern similarity by cohort](figures/pattern_similarity.png)
 
-### Validation ROC Curve
+### LSTM Competition Comparison
 
-![Validation ROC curve](figures/validation_roc.png)
+![Upgraded LSTM compared with selected competition results](output1/figures/lstm_competition_comparison.png)
 
 ## Academic Context
 
