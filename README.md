@@ -197,10 +197,10 @@ The upgraded model writes its own checkpoints, metrics, predictions, and figures
 The upgraded model is compared with selected published PhysioNet/CinC 2019
 results using AUROC, AUPRC, and F1-score:
 
-![Upgraded LSTM competition comparison](output1/figures/lstm_competition_comparison.png)
+![Upgraded LSTM competition comparison](figures/lstm_competition_comparison.png)
 
-The source script is `src1/plot_comparison.py`, and the generated figure is
-stored at `output1/figures/lstm_competition_comparison.png`.
+The source script is `src1/plot_comparison.py`, and the committed figure is
+stored at `figures/lstm_competition_comparison.png`.
 
 ## Repository Structure
 
@@ -324,7 +324,7 @@ This produces a pipeline that combines interpretable physiological pattern disco
 
 ### LSTM Competition Comparison
 
-![Upgraded LSTM compared with selected competition results](output1/figures/lstm_competition_comparison.png)
+![Upgraded LSTM compared with selected competition results](figures/lstm_competition_comparison.png)
 
 ## Academic Context
 
